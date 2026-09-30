@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volve DCA Edge: prakiraan produksi sumur langsung di browser</title>
+<meta name="description" content="Prediksi rasio produksi 30 hari ke depan (dikonversi ke laju minyak) pada data Equinor Volve dengan XGBoost, dijalankan di browser lewat ONNX Runtime Web.">
+<meta property="og:title" content="Volve DCA Edge">
+<meta property="og:description" content="Prakiraan produksi sumur dengan XGBoost + ONNX, tanpa server dan tanpa GPU.">
+<meta property="og:type" content="website">
+<link rel="preload" href="fonts/pixelify-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#demo">Lewati ke demo</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="Volve DCA Edge, ke atas">
+      <svg width="24" height="24" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v1H3zM2 1h4v1H2zM1 2h6v1H1zM3 3h2v5H3zM1 7h6v1H1z"/></svg>
+      <span>Volve DCA</span>
+    </a>
+    <nav aria-label="Navigasi utama">
+      <a href="#demo">Demo</a><a href="#unggah">Data Saya</a><a href="#hasil">Hasil</a><a href="#metode">Metode</a><a href="#tim">Tim</a><a id="nav-gh" href="#tim">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero wrap">
+  <div class="hero-text">
+    <p class="badge" id="src-badge">DATA: memuat<span class="cursor" aria-hidden="true">_</span></p>
+    <h1>Prakiraan produksi sumur, dihitung di browser Anda</h1>
+    <p class="lead">Kurva Arps mulai meleset saat sumur ditutup sementara atau di-workover. Model XGBoost kecil ini membaca 14 fitur dari riwayat produksi dan memperkirakan rasio produksi 30 hari ke depan terhadap rata-rata 30 hari saat ini, lalu mengonversinya kembali menjadi laju minyak (sm³/hari).</p>
+    <div class="cta">
+      <button class="btn gold" id="try">Try Sample Data</button>
+      <a class="btn line" id="hero-gh" href="#tim">GitHub</a>
+    </div>
+  </div>
+  <div class="hero-art px" aria-hidden="true">
+    <svg viewBox="0 0 48 32" shape-rendering="crispEdges" class="pump">
+      <rect x="0" y="30" width="48" height="2" fill="var(--line)"/>
+      <rect x="6" y="26" width="10" height="4" fill="var(--muted)"/>
+      <rect x="22" y="10" width="2" height="20" fill="var(--ink)"/>
+      <rect x="18" y="26" width="10" height="4" fill="var(--muted)"/>
+      <g class="fa"><rect x="8" y="10" width="26" height="2" fill="var(--ink)"/><rect x="4" y="12" width="4" height="4" fill="var(--gold)"/><rect x="34" y="12" width="2" height="12" fill="var(--teal)"/><rect x="34" y="24" width="2" height="2" fill="var(--teal)"/></g>
+      <g class="fb"><rect x="8" y="12" width="26" height="2" fill="var(--ink)"/><rect x="4" y="8" width="4" height="4" fill="var(--gold)"/><rect x="34" y="14" width="2" height="12" fill="var(--teal)"/></g>
+    </svg>
+  </div>
+  <dl class="kpis" aria-label="Ringkasan hasil">
+    <div class="px kpi"><dt>WAPE XGBoost</dt><dd id="k-wape">-</dd></div>
+    <div class="px kpi"><dt>Ukuran model</dt><dd id="k-size">-</dd></div>
+    <div class="px kpi"><dt>Latency di browser</dt><dd id="k-lat">belum diukur</dd></div>
+  </dl>
+</section>
+
+<section class="wrap band">
+  <h2>Masalah dan pilar</h2>
+  <div class="grid3">
+    <article class="px card"><h3>Arps meleset saat ada interupsi</h3><p>Decline curve klasik mengasumsikan sumur berproduksi mulus. Shut-in dan workover memutus asumsi itu, sehingga proyeksinya menyimpang.</p></article>
+    <article class="px card"><h3>Optimasi produksi dan asset reliability</h3><p>Proyeksi laju alir menentukan layak tidaknya infill drilling atau workover, jadi selisih prakiraan langsung berdampak ke keputusan operasional.</p></article>
+    <article class="px card"><h3>Edge AI, tanpa backend</h3><p>Model pohon berukuran di bawah 1 MB dijalankan oleh ONNX Runtime Web di perangkat Anda. Tidak ada server inferensi dan tidak ada GPU.</p></article>
+  </div>
+</section>
+
+<section class="wrap band" id="demo" aria-labelledby="h-demo">
+  <h2 id="h-demo">Demo</h2>
+  <p class="note">Pilih satu sampel bawaan. Inferensi berjalan lokal, tanpa unggah data.</p>
+  <div class="row" id="sample-btns" role="group" aria-label="Pilih sampel"></div>
+  <p id="status" class="status" role="status" aria-live="polite">Runtime dan model dimuat saat demo pertama dijalankan.</p>
+
+  <div class="kpis4" id="demo-kpis" hidden>
+    <div class="px kpi"><dt>Aktual (rata-rata 30 hari)</dt><dd id="d-act">-</dd></div>
+    <div class="px kpi"><dt><span class="sw ember"></span>Arps</dt><dd id="d-arps">-</dd></div>
+    <div class="px kpi"><dt><span class="sw teal"></span>XGBoost (ONNX)</dt><dd id="d-xgb">-</dd></div>
+    <div class="px kpi"><dt>Latency median</dt><dd id="d-lat">-</dd></div>
+  </div>
+
+  <div class="two" id="demo-body" hidden>
+    <figure class="px panel">
+      <figcaption>Histori 120 hari dan 30 hari ke depan (sm³/hari)</figcaption>
+      <svg id="chart" viewBox="0 0 640 300" role="img" aria-label="Grafik laju minyak histori dan prakiraan"></svg>
+    </figure>
+    <figure class="px panel">
+      <figcaption>Kontribusi fitur TreeSHAP, 8 teratas</figcaption>
+      <svg id="shap" viewBox="0 0 400 300" role="img" aria-label="Diagram batang kontribusi SHAP"></svg>
+      <p class="note small" id="shap-note"></p>
+    </figure>
+  </div>
+
+  <details class="px panel whatif" id="whatif" hidden>
+    <summary>What-if: ubah fitur lalu jalankan ulang</summary>
+    <p class="note small">Hanya prediksi yang dihitung ulang. SHAP tetap milik sampel asli karena dihitung offline.</p>
+    <form id="wf-form" class="wf-grid" onsubmit="return false"></form>
+    <div class="row"><button class="btn line" id="wf-run" type="button">Jalankan ulang</button><button class="btn line" id="wf-reset" type="button">Reset</button></div>
+  </details>
+  <p class="note small" id="dev-note"></p>
+</section>
+
+<section class="wrap band" id="unggah" aria-labelledby="h-unggah">
+  <h2 id="h-unggah">Coba data Volve Anda sendiri</h2>
+  <p class="note">Opsional. Berkas diproses sepenuhnya di browser Anda dan tidak dikirim ke server manapun.</p>
+
+  <details class="px panel" open>
+    <summary>Format data yang diterima (baca sebelum unggah)</summary>
+    <p class="note small">Sheet harus mengandung kata "Daily" pada namanya (seperti bawaan Volve: "Daily Production Data"), atau berkas cukup punya satu sheet. Satu baris = satu sumur pada satu hari, dengan kolom persis seperti berikut (nama kolom peka huruf besar/kecil):</p>
+    <table class="fmt-table">
+      <caption>Kolom yang dibaca dari sheet</caption>
+      <thead><tr><th>Kolom</th><th>Tipe</th><th>Wajib</th><th>Keterangan</th></tr></thead>
+      <tbody>
+        <tr><td>DATEPRD</td><td>Tanggal</td><td>Ya</td><td>Tanggal produksi harian</td></tr>
+        <tr><td>NPD_WELL_BORE_NAME</td><td>Teks</td><td>Ya</td><td>Nama sumur, misalnya 15/9-F-12</td></tr>
+        <tr><td>ON_STREAM_HRS</td><td>Angka 0-24</td><td>Ya</td><td>Jam sumur beroperasi hari itu</td></tr>
+        <tr><td>AVG_WHP_P</td><td>Angka</td><td>Ya</td><td>Tekanan kepala sumur</td></tr>
+        <tr><td>AVG_CHOKE_SIZE_P</td><td>Angka (%)</td><td>Ya</td><td>Bukaan choke</td></tr>
+        <tr><td>BORE_OIL_VOL</td><td>Angka (Sm³)</td><td>Ya</td><td>Volume minyak harian</td></tr>
+        <tr><td>BORE_GAS_VOL</td><td>Angka (Sm³)</td><td>Ya</td><td>Volume gas harian</td></tr>
+        <tr><td>BORE_WAT_VOL</td><td>Angka (Sm³)</td><td>Ya</td><td>Volume air harian</td></tr>
+        <tr><td>WELL_TYPE</td><td>Teks (OP/WI)</td><td>Tidak</td><td>Bila ada, hanya baris OP yang dipakai</td></tr>
+      </tbody>
+    </table>
+    <p class="note small">Minimal 120 hari kalender untuk satu sumur. Tanggal yang tidak ada di berkas dianggap shut-in (produksi 0), sama seperti saat training. Prediksi ditolak bila rata-rata 30 hari terakhir ≤ 5 sm³/hari, karena model tidak dilatih di rentang itu. Ukuran berkas maksimal 20 MB.</p>
+  </details>
+
+  <div class="px panel warn-box">
+    <p class="note small">Perhitungan 14 fitur di halaman ini adalah salinan dari <code>prep_well()</code> dan <code>feats()</code> di <code>src/train.py</code>. Pada file Volve yang sama, fitur JS dan Python dicocokkan untuk semua hari di 6 sumur (130.676 nilai) dengan selisih relatif maksimum di bawah 1e-13. Kesamaan ini terbukti untuk format Volve di atas; file dengan format lain tidak dijamin.</p>
+  </div>
+
+  <div class="row">
+    <label class="btn line" for="up-file" style="cursor:pointer">Pilih berkas .xlsx</label>
+    <input class="vh" id="up-file" type="file" accept=".xlsx" />
+  </div>
+  <p id="up-status" class="status" role="status" aria-live="polite"></p>
+
+  <div id="up-controls" class="row" hidden>
+    <label>Sumur<select id="up-well"></select></label>
+    <label>Tanggal prakiraan (t)<input id="up-date" type="date"></label>
+    <button class="btn gold" id="up-run" type="button">Jalankan Prediksi</button>
+  </div>
+
+  <div id="up-results" class="two" hidden>
+    <div class="px panel">
+      <div class="kpi" id="up-actual-row" hidden><dt>Aktual, rata-rata 30 hari (bila tersedia di berkas)</dt><dd id="up-actual">-</dd></div>
+      <div class="kpi"><dt><span class="sw teal"></span>Prediksi XGBoost</dt><dd id="up-pred">-</dd></div>
+    </div>
+    <figure class="px panel">
+      <figcaption>Histori dan prakiraan dari data Anda (sm³/hari)</figcaption>
+      <svg id="up-chart" viewBox="0 0 640 300" role="img" aria-label="Grafik prediksi dari data unggahan"></svg>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap band" id="hasil">
+  <h2>Hasil</h2>
+  <p class="note" id="res-note">Split temporal per sumur (75/25, jeda 30 hari). Satu split dan satu seed, jadi selisih antarmodel belum diuji signifikansinya.</p>
+  <div class="two">
+    <div class="px panel"><table id="tbl"><caption>Galat menurut model (makin kecil makin baik)</caption><thead><tr><th scope="col">Model</th><th scope="col">MAE</th><th scope="col">RMSE</th><th scope="col">WAPE</th></tr></thead><tbody></tbody></table></div>
+    <figure class="px panel"><figcaption>WAPE per sumur</figcaption><svg id="wells" viewBox="0 0 400 300" role="img" aria-label="WAPE per sumur, Arps dibanding XGBoost"></svg></figure>
+  </div>
+  <div class="px panel green" id="green"><h3>Green AI</h3><ul id="green-list"></ul></div>
+</section>
+
+<section class="wrap band" id="metode">
+  <h2>Metode</h2>
+  <ol class="pipe" aria-label="Alur pipeline">
+    <li class="px">Data<small>Volve, 6 sumur produser</small></li>
+    <li class="px">Fitur<small>14 fitur, termasuk uptime</small></li>
+    <li class="px">XGBoost<small>target berupa rasio</small></li>
+    <li class="px">ONNX<small>satu berkas kecil</small></li>
+    <li class="px">Browser<small>WASM lokal</small></li>
+  </ol>
+  <div class="two">
+    <article class="px card"><h3>Asumsi</h3><ul><li>Hari tanpa data dianggap shut-in. Ini belum divalidasi.</li><li>Target model: rasio = rata-rata laju 30 hari ke depan ÷ rata-rata 30 hari saat ini. Rasio prediksi dikalikan rata-rata 30 hari saat ini untuk kembali ke sm³/hari.</li></ul></article>
+    <article class="px card"><h3>Keterbatasan</h3><ul><li>Hanya 6 sumur dan data historis, jadi belum terbukti umum untuk sumur baru.</li><li>Belum ada interval ketidakpastian pada prediksi.</li></ul></article>
+  </div>
+</section>
+
+<section class="wrap band" id="tim" aria-labelledby="h-tim">
+  <h2 id="h-tim">Tim</h2>
+  <ul class="team" id="team"></ul>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><a id="foot-gh" href="#tim">Repositori GitHub</a></p>
+    <p>Data: Equinor Volve Data Village, dipakai di bawah lisensi Equinor. Disediakan apa adanya (as is); data mentah tidak disertakan di repositori ini.</p>
+    <p>Ini prototipe kuliah, bukan sistem produksi. Jangan dipakai sebagai dasar keputusan investasi.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+[
+  {"nama":"Raditya Andiza Putro","nim":"23083010058","peran":"Lead Technical Writer","linkedin":"TODO","foto":"img/team/TODO-ketua.jpg","ketua":true},
+  {"nama":"Rosyidatul Kamila","nim":"23083010076","peran":"Data & Pipeline Specialist","linkedin":"https://www.linkedin.com/in/rosyidatulkamila","foto":"img/team/kamila.jpg","ketua":false},
+  {"nama":"Pinka Nurdiana","nim":"23083010057","peran":"Model Architect","linkedin":"https://www.linkedin.com/in/pinka-nurdiana","foto":"img/team/pinka.jpeg","ketua":false},
+  {"nama":"Vivian Subiono ","nim":"23083010065","peran":"Frontend & UX Engineer","linkedin":"https://www.linkedin.com/in/vivian-subiono","foto":"img/team/vivian.jpeg","ketua":false},
+  {"nama":"Nahda Hayu Hemalina","nim":"23083010066","peran":"Deployment & Edge Engineer","linkedin":"https://www.linkedin.com/in/nahda-hayu-hemalina-250393235?trk=contact-info","foto":"img/team/nahda.jpg","ketua":false}
+]

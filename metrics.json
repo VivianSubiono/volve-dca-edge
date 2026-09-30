@@ -1,0 +1,78 @@
+{
+ "data_source": "volve",
+ "horizon_days": 30,
+ "target": {
+  "definition": "rata-rata laju minyak 30 hari ke depan / rata-rata 30 hari saat ini",
+  "ratio_clip_max": 3.0,
+  "ratio_MAE": {
+   "Persistence (rasio = 1)": 0.5026,
+   "XGBoost": 0.4674
+  }
+ },
+ "n_train": 6576,
+ "n_test_eval": 426,
+ "models": {
+  "Persistence (mean 30d)": {
+   "MAE": 58.26,
+   "RMSE": 101.52,
+   "WAPE": 0.1985
+  },
+  "Arps hyperbolic (fit 180d)": {
+   "MAE": 70.5,
+   "RMSE": 118.42,
+   "WAPE": 0.2402
+  },
+  "XGBoost (lag+rolling)": {
+   "MAE": 48.39,
+   "RMSE": 79.49,
+   "WAPE": 0.1649
+  }
+ },
+ "wape_per_well": {
+  "15/9-F-1 C": {
+   "arps": 1.0054,
+   "xgb": 0.3999
+  },
+  "15/9-F-11": {
+   "arps": 0.198,
+   "xgb": 0.1085
+  },
+  "15/9-F-12": {
+   "arps": 0.2521,
+   "xgb": 0.149
+  },
+  "15/9-F-14": {
+   "arps": 0.1316,
+   "xgb": 0.1921
+  },
+  "15/9-F-15 D": {
+   "arps": 0.4416,
+   "xgb": 0.352
+  },
+  "15/9-F-5": {
+   "arps": 1.0819,
+   "xgb": 1.0109
+  }
+ },
+ "efficiency": {
+  "model_size_MB": 0.0939,
+  "latency_ms_p50_native_ort": 0.006,
+  "onnx_vs_xgb_max_abs_diff": 1.6689300537109375e-06
+ },
+ "global_shap_mean_abs": {
+  "oil_m7_m30": 3.925,
+  "oil_m30_m90": 14.087,
+  "oil_d1_m30": 21.362,
+  "wc7": 7.032,
+  "wc_delta": 4.722,
+  "log_gor7": 1.908,
+  "gor_ratio": 1.589,
+  "whp7": 3.255,
+  "whp_ratio": 1.151,
+  "choke7": 2.718,
+  "uptime7": 4.592,
+  "uptime30": 37.814,
+  "log_days": 10.96,
+  "log_m30": 9.467
+ }
+}
